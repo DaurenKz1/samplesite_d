@@ -12,7 +12,7 @@ def is_active_default():
 
 def validate_even(val):
     if val % 2 != 0:
-        raise ValidationError('Число %(value)s нечётное',
+        raise ValidationError('Число %(value)s нечётное!',
                               code='odd',
                               params={'value': val})
 
