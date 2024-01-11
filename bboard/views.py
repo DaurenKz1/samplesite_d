@@ -4,11 +4,12 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponsePermanen
 from django.template import loader
 from django.template.loader import get_template, render_to_string
 from django.urls import reverse_lazy, reverse
-from django.views.generic.base import TemplateView
-from django.views.generic.edit import CreateView
+from django.views.generic import ArchiveIndexView, MonthArchiveView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
-from django.views.generic.edit import FormView
+
+from django.views.generic.base import TemplateView, RedirectView
 
 from .forms import BbForm
 from .models import Bb, Rubric
@@ -35,13 +36,38 @@ class BbByRubricView(ListView):
         context['current_rubric'] = Rubric.objects.get(pk=self.kwargs['rubric_id'])
         return context
 
-# def by_rubric(request, rubric_id):
-#     bbs = Bb.objects.filter(rubric=rubric_id)
-#     rubrics = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)
-#     current_rubric = Rubric.objects.get(pk=rubric_id)
-#     context = {'bbs': bbs, 'rubrics': rubrics,
-#                'current_rubric': current_rubric}
-#     return render(request, 'by_rubric.html', context)
+class BbIndexView(ArchiveIndexView):
+    model = Bb
+    template_name = 'index.html'
+    date_field = 'published'
+    date_list_period = 'month'
+    context_object_name = 'bbs'
+    allow_empty = True
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['rubrics'] = Rubric.objects.all()
+        return context
+
+
+class BbMonthView(MonthArchiveView):
+    model = Bb
+    template_name = 'index.html'
+    date_field = 'published'
+    date_list_period = 'month'
+    month_format = '%m'
+    context_object_name = 'bbs'
+    allow_empty = True
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['rubrics'] = Rubric.objects.all()
+        return context
+
+
+class BbRedirectView(RedirectView):
+    url = '/'
+
 
 
 class BbByRubricView(TemplateView):
@@ -53,52 +79,6 @@ class BbByRubricView(TemplateView):
         context['rubrics'] = Rubric.objects.all()
         context['current_rubric'] = Rubric.objects.get(pk=context['rubric_id'])
         return context
-
-
-class BbAddView(FormView):
-    template_name = 'create.html'
-    form_class = BbForm
-    initial = {'price': 0.0}
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
-        return context
-
-    def form_valid(self, form):
-        form.save()
-        return super().form_valid(form)
-
-    def get_form(self, form_class=None):
-        self.object = super().get_form(form_class)
-        return self.object
-
-    def get_success_url(self):
-        return reverse('bboard: by_rubric', kwargs={'rubric_id': self.object.cleaned_data['rubric'].pk})
-
-# def add_and_save(request):
-#     print(request.headers['Accept-Encoding'])
-#     print(request.headers['accept-encoding'])
-#     print(request.headers['accept_encoding'])
-#     print(request.headers['Cookie'])
-#     print(request.resolver_match)
-#     print(request.body)
-#
-#     if request.method == 'POST':
-#         bbf = BbForm(request.POST)
-#         if bbf.is_valid():
-#             bbf.save()
-#             return HttpResponseRedirect(
-#                 reverse('bboard:by_rubric',
-#                         kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
-#             )
-#         else:
-#             context = {'form': bbf}
-#             return render(request, 'create.html', context)
-#     else:
-#         bbf = BbForm()
-#         context = {'form': bbf}
-#         return render(request, 'create.html', context)
 
 
 class BbDetailView(DetailView):
@@ -114,9 +94,28 @@ class BbDetailView(DetailView):
 class BbCreateView(CreateView):
     template_name = 'create.html'
     form_class = BbForm
-    success_url = reverse_lazy('bboard:index')
+    success_url = "/"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['rubrics'] = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)
+        return context
+
+class BbEditView(UpdateView):
+    model = Bb
+    form_class = BbForm
+    success_url = "/"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['rubrics'] = Rubric.objects.all()
+        return context
+
+class BbDeleteView(DeleteView):
+    model = Bb
+    success_url = "/"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['rubrics'] = Rubric.objects.all()
         return context
