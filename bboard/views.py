@@ -21,7 +21,7 @@ def index(request):
     rubrics = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)
     context = {'bbs': bbs, 'rubrics': rubrics}
     return HttpResponse(
-        render_to_string('index.html', context, request)
+        render_to_string('_index.html', context, request)
     )
 
 class BbByRubricView(ListView):
@@ -53,7 +53,7 @@ class BbIndexView(ArchiveIndexView):
 
 class BbMonthView(MonthArchiveView):
     model = Bb
-    template_name = 'index.html'
+    template_name = '_index.html'
     date_field = 'published'
     date_list_period = 'month'
     month_format = '%m'
