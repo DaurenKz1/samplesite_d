@@ -15,6 +15,7 @@ from .forms import BbForm
 from .models import Bb, Rubric
 
 
+
 def index(request):
     bbs = Bb.objects.all()
     rubrics = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)

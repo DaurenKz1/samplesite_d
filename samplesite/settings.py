@@ -60,6 +60,8 @@ TEMPLATES = [
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
+            # 'file_charset': 'utf-8',
+            # 'debug' : False,
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
