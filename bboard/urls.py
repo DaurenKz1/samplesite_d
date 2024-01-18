@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import (index, BbByRubricView,
+from .views import (#index,
+    BbByRubricView,
     # by_rubric, add_and_save,
                     BbCreateView, BbDetailView, BbEditView, BbDeleteView, BbIndexView, BbRedirectView, BbMonthView)
 
