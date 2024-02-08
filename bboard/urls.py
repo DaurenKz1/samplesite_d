@@ -1,9 +1,10 @@
+from django.contrib.auth.views import LoginView
 from django.urls import path
 
 from .views import (  # index,
     BbIndexView, BbMonthView, BbByRubricView,
     BbCreateView, BbDetailView, BbEditView, BbDeleteView,
-    BbRedirectView, edit, add_save, rubrics)
+    BbRedirectView, edit, add_save, rubrics, bbs)
 
 
 app_name = 'bboard'
@@ -23,5 +24,8 @@ urlpatterns = [
     path('year/<int:year>/', BbRedirectView.as_view(), name='redirect'),
     path('<int:year>/<int:month>/', BbMonthView.as_view(), name='month'),
 
-    path('rubrics/', rubrics, name='rubrics')
+    path('rubrics/', rubrics, name='rubrics'),
+    path('bbs/<int:rubric_id>/', bbs, name='bbs'),
+
+    path('accounts/login/', LoginView.as_view(), name='login')
 ]

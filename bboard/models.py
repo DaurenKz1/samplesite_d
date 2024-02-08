@@ -32,7 +32,8 @@ class MinMaxValueValidator:
 
 
 class Rubric(models.Model):
-    name = models.CharField(max_length=20, db_index=True, verbose_name='Название', unique=True)
+    name = models.CharField(max_length=20, db_index=True,
+                            verbose_name='Название', unique=True)
     order = models.SmallIntegerField(default=0, db_index=True)
 
     def __str__(self):
