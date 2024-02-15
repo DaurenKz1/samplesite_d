@@ -1,5 +1,6 @@
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count
 from django.forms import modelformset_factory, inlineformset_factory
 from django.forms.formsets import ORDERING_FIELD_NAME
@@ -176,6 +177,9 @@ def add_save(request):
         context = {'form': bbf}
         return render(request, 'bboard/bb_form.html', context)
 
+
+# def commit_handler():
+#     print("RONALDO SIIIIIIIIIIIIIIIIIIUUUUUUUUUUUUUUUU")
 def rubrics(request):
     RubricFormSet = modelformset_factory(Rubric, fields=('name', ), can_order= True, can_delete=True)
     if request.method == 'POST':
@@ -185,9 +189,22 @@ def rubrics(request):
             instances = formset.save(commit=False)
             for obj in formset:
                 if obj.cleaned_data:
-                    rubric = obj.save(commit=False)
-                    rubric.order = obj.cleaned_data[ORDERING_FIELD_NAME]
-                    rubric.save()
+                    sp = transaction.savepoint()
+
+                    try:
+                        rubric = obj.save(commit=False)
+                        rubric.order = obj.cleaned_data[ORDERING_FIELD_NAME]
+                        rubric.save()
+                        transaction.savepoint_commit(sp)
+                        print('RONALDO SSIUUUUUUUUUUUUUUUUUUUUU' )
+                    except:
+                        transaction.savepoint_rollback(sp)
+                        transaction.commit()
+                        print('RONALDO NNOOOOOOT SSIUUUUUUUUUUUUUUUUUUUUU')
+
+                    # transaction.on_commit(commit_handler)
+
+
             for obj in formset.deleted_objects:
                 obj.delete()
 
@@ -200,8 +217,8 @@ def rubrics(request):
     return render(request, 'bboard/rubrics.html', context)
 
 
-
-
+# @transaction.non_atomic_requests
+# @transaction.atomic
 def bbs(request, rubric_id):
     BbsFormSet = inlineformset_factory(Rubric, Bb, form=BbForm, extra=1)
     rubric = Rubric.objects.get(pk=rubric_id)
@@ -209,6 +226,7 @@ def bbs(request, rubric_id):
         formset = BbsFormSet(request.POST, instance=rubric)
 
         if formset.is_valid():
+            # with transaction.atomic():
             formset.save()
             return redirect('bboard:index')
     else:

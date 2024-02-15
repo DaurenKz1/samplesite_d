@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#A  В  Г  А  А Б  Г Б  Б  Г  В  А  В  А Г   В
 
 # Application definition
 
@@ -87,6 +88,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ATOMIC_REQUESTS': False,
+        'AUTOCOMMIT': False
     }
 }
 
