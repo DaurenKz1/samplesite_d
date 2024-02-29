@@ -3,6 +3,9 @@ from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import JSONField
+from datetime import datetime
+
+from os.path import splitext
 
 
 class AdvUser(models.Model):
@@ -70,3 +73,14 @@ class PGSRubric(models.Model):
 # class PGSProject3(models.Model):
 #     name = CICharField(max_length=40, verbose_name='Название')
 #     data = JSONField()
+
+def get_timestamp_path(instance, filename):
+    return f'{datetime.now().timestamp()}{splitext(filename)[1]}'
+
+class Img(models.Model):
+    img = models.ImageField(verbose_name="Изображение", upload_to=get_timestamp_path)
+    desc = models.TextField(verbose_name="Описание")
+
+    class Meta:
+        verbose_name = 'Изображение'
+        verbose_name_plural = 'Изображение'
