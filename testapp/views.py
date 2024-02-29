@@ -7,7 +7,8 @@ from django.urls import resolve
 from django.views.decorators.http import require_http_methods, require_GET
 
 from bboard.models import Rubric, Bb
-from .forms import ImgForm, Img
+from .forms import ImgForm
+from .models import Img
 
 # def index(request):
 #     resp_content = ('Здесь будет', ' главная', ' страница', ' сайта')
@@ -64,4 +65,4 @@ def delete(request, pk):
     img = Img.objects.get(pk=pk)
     img.img.delete()
     img.delete()
-    return redirect("test:add")
+    return redirect('test:add')
