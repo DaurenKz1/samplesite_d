@@ -7,7 +7,7 @@ from django.urls import resolve
 from django.views.decorators.http import require_http_methods, require_GET
 
 from bboard.models import Rubric, Bb
-from .forms import ImgForm
+from .forms import ImgForm, Img
 
 # def index(request):
 #     resp_content = ('Здесь будет', ' главная', ' страница', ' сайта')
@@ -59,3 +59,9 @@ def add(request):
         form = ImgForm()
     context = {'form':form}
     return render(request, 'testapp/add.html', context)
+
+def delete(request, pk):
+    img = Img.objects.get(pk=pk)
+    img.img.delete()
+    img.delete()
+    return redirect("test:add")
