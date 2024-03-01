@@ -6,5 +6,6 @@ app_name = 'testapp'
 
 urlpatterns = [
     path('', index, name='index'),
-    path('add/', add, name='add')
+    path('add/', add, name='add'),
+
 ]
