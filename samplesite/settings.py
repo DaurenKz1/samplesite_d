@@ -42,8 +42,10 @@ INSTALLED_APPS = [
     'captcha',
     'precise_bbcode',
     'bootstrap4',
+    'django_cleanup',
+    'easy_thumbnails',
 
-    'bboard',
+    'bboard.apps.BboardConfig',  # 'bboard',
     'testapp',
 ]
 
@@ -117,6 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -125,6 +130,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# AUTH_USER_MODEL = 'auth.User'
 
 
 # Internationalization
