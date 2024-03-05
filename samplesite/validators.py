@@ -7,4 +7,9 @@ class NoForbiddenCharsValidator:
     def validate(self, password, user=None):
         for fc in self.forbidden_chars:
             if fc in password:
-                raise ValidationError
+                raise ValidationError(
+                    'Алло, пароль не должен содержать недопустимые символы %s' % ', '.join(self.forbidden_chars),
+                    code='forbidden_chars_present')
+
+    def get_help_text(self):
+        return 'Алло, пароль не должен содержать недопустимые символы %s' % ', '.join(self.forbidden_chars)
