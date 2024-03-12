@@ -212,3 +212,21 @@ BBCODE_SMILIES_UPLOAD_TO = os.path.join('precise_bbcode', 'smilies')
 #     'success_css_class': 'has-success',
 #     'error_css_class': 'has-error',
 # }
+
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
+# MESSAGE_LEVEL = 20
+
+# DEBUG = 10
+# INFO = 20
+# SUCCESS = 25
+# WARNING = 30
+# ERROR = 40
+
+# from django.contrib import messages
+# MESSAGE_LEVEL = messages.DEBUG
+
