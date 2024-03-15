@@ -3,9 +3,10 @@ from django.template.defaultfilters import stringfilter
 from django.utils.html import escape
 from django.utils.safestring import mark_safe, SafeText
 
-register = template.Library()  # for filters and tags
+register = template.Library()
 
-# filters
+
+# Ф И Л Ь Т Р
 # @register.filter(name='cur', is_safe=True)
 @register.filter(name='cur')
 # @stringfilter
@@ -24,11 +25,11 @@ def currency(value, name='тг.'):
 #     pass
 
 
-#tags
-@register.simple_tag()
+# Т Е Г
+@register.simple_tag
 def lst(sep, *args):
     # return f'{sep.join(args)} (итого {len(args)})'
-    return mark_safe(f'{sep.join(args)} (итого <strong>{len(args)}</strong>)')
+    return mark_safe(f'{sep.join(args)} (<strong>итого {len(args)}</strong>)')
 
 
 # @register.simple_tag(takes_context=True)
@@ -39,14 +40,3 @@ def lst(sep, *args):
 @register.inclusion_tag('tags/ulist.html')
 def ulist(*args):
     return {'items': args}
-
-
-@register.filter
-def half_string(value):
-    half_length = int(len(value) / 2)
-    return mark_safe(value[:half_length])
-
-
-# @register.simple_tag
-# def split_string(string, sep, *args):
-#     return string.split(sep, *args)

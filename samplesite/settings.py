@@ -9,8 +9,15 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os
+import os.path
 from pathlib import Path
+
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +27,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jf$ax!sf0v2j0g(kv%omsdi*#+-hj9v&(h0g__)djm_-u1kny)'
+# SECRET_KEY = 'django-insecure-jf$ax!sf0v2j0g(kv%omsdi*#+-hj9v&(h0g__)djm_-u1kny)'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,7 +53,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'easy_thumbnails',
 
-    'bboard',
+    'bboard.apps.BboardConfig',  # 'bboard',
     'testapp',
 ]
 
@@ -57,6 +65,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # 'bboard.middlewares.my_middleware',
+    # 'bboard.middlewares.MyMiddleware',
+    # 'bboard.middlewares.RubricMiddleware',
 ]
 
 ROOT_URLCONF = 'samplesite.urls'
@@ -69,17 +81,24 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             # 'file_charset': 'utf-8',
-            # 'debug': False, # uje est
+            # 'debug': False,
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth', # user.is_authenticated, perms = param
+                'django.contrib.auth.context_processors.auth',  # user, perms
                 'django.contrib.messages.context_processors.messages',
 
                 # 'django.template.context_processors.csrf',
                 'django.template.context_processors.static',
                 # 'django.template.context_processors.media',
+                'bboard.middlewares.rubrics',
             ],
+            # 'libraries': {
+            #     'filtertags': 'bboard.filtertags',
+            # },
+            # 'builtins': [
+            #     'bboard.templatetags.filtertags',
+            # ],
         },
     },
 ]
@@ -90,20 +109,19 @@ WSGI_APPLICATION = 'samplesite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    #     # 'ATOMIC_REQUEST': False,
+    #     'AUTOCOMMIT': False,
+    # }
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         # "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "postgres",
         "USER": "postgres",
-        "PASSWORD": "12345",
+        "PASSWORD": "1234",
         "HOST": "127.0.0.1",
         "PORT": "5432",
     }
@@ -119,6 +137,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -126,7 +147,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'samplesite.validators.NoForbiddenCharsValidator',
+        'OPTIONS': {'forbidden_chars': (' ', ',', '.', ':', ';')},
+    },
 ]
+
+# AUTH_USER_MODEL = "auth.User"
 
 
 # Internationalization
@@ -148,49 +175,49 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-
 # STATIC_ROOT = BASE_DIR / 'static'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE = 2621440
+# FILE_UPLOAD_TEMP_DIR = None
+# FILE_UPLOAD_PERMISSIONS = 0o644
+# FILE_UPLOAD_DIRECTORY_PERMISSIONS = None
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-
-
 # ABSOLUTE_URL_OVERRIDES = {
-#     # 'bboard.rubric': lambda rec: "/%s" % rec.pk,
+#     # 'bboard.rubric': lambda rec: "/%s/" % rec.pk,
 #     'bboard.rubric': lambda rec: f"/{rec.pk}/",
 # }
 
-# LOGIN_URL = "/accounts/login/"
 LOGIN_URL = "bboard:login"
 LOGIN_REDIRECT_URL = "bboard:index"
 LOGOUT_REDIRECT_URL = "bboard:index"
 
-# CAPTCHA
-CAPTCHA_CHALLENGE_FUNC = 'captcha.helpers.random_char_challenge'
+# Настройки Капчи
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
 CAPTCHA_LENGTH = 4  # 6
 CAPTCHA_WORDS_DICTIONARY = '/static/captcha_words.txt'
-CAPTCHA_TIMEOUT = 5  # MINUTES
+CAPTCHA_TIMEOUT = 5  # МИНУТ
 
 
-# DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440   # 2.5 MBYTES
+# DATA_UPLOAD_MAX_MEMORY_SIZE = 2621440  # 2.5 Mbytes
 # DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
-## BBCode
+
+# BBCode
 BBCODE_NEWLINE = "<br>"
-# BBCODE_ESCAPE_HTML
+# BBCODE_ESCAPE_HTML = ""
 BBCODE_DISABLE_BUILTIN_TAGS = False
 BBCODE_ALLOW_CUSTOM_TAGS = True
 BBCODE_ALLOW_SMILIES = True
 BBCODE_SMILIES_UPLOAD_TO = os.path.join('precise_bbcode', 'smilies')
+
 
 # BOOTSTRAP4 = {
 #     'horizontal_label_class': 'col-md-3',
@@ -201,34 +228,61 @@ BBCODE_SMILIES_UPLOAD_TO = os.path.join('precise_bbcode', 'smilies')
 # }
 
 THUMBNAIL_ALIASES = {
-    'bboard.Bb.picture' : {
+    'bboard.Bb.picture': {
         'default': {
-            'size' : (500,300),
-            'crop' : 'scale',
+            'size': (500, 300),
+            'crop': 'scale',
         },
     },
-    'testapp' : {
+    'testapp': {
         'default': {
-            'size' : (400,300),
-            'crop' : 'smart',
-            'bw' : True,
+            'size': (400, 300),
+            'crop': 'smart',
+            'bw': True,
         },
     },
-    '':{
-        'default' : {
-            'size' : (180,240),
-            'crop' : "scale"
+    '': {
+        'default': {
+            'size': (180, 240),
+            'crop': 'scale',
         },
-        'big':{
-            'size':(480, 640),
-            'crop':'10,10'
+        'big': {
+            'size': (480, 640),
+            'crop': '10,10'
         },
     },
 }
 
 THUMBNAIL_DEFAULT_OPTIONS = {
-    'quality' : 90,
-    'subsampling' : 1
+    'quality': 90,
+    'subsampling': 1,
 }
 
-THUMBNAIL_PRESERVE_EXTENSION = True #('png',)
+THUMBNAIL_PRESERVE_EXTENSION = True  # ('png',)
+
+
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.file'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+
+# MESSAGE_LEVEL = 20
+
+# from django.contrib import messages
+# MESSAGE_LEVEL = messages.DEBUG
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
+
+DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+# EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+
+EMAIL_FILE_PATH = 'tmp/messages/'
+EMAIL_TIMEOUT = 5 #sc

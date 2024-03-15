@@ -1,5 +1,8 @@
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.core.paginator import Paginator
@@ -7,42 +10,59 @@ from django.db import transaction
 from django.db.models import Count
 from django.forms import modelformset_factory, inlineformset_factory
 from django.forms.formsets import ORDERING_FIELD_NAME
-from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect, HttpResponseNotFound, Http404
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy, reverse
-from django.views.generic.detail import DetailView
-from django.views.generic import ListView
+from django.views.generic import RedirectView
 from django.views.generic.dates import ArchiveIndexView, MonthArchiveView
-from django.views.generic.base import TemplateView, RedirectView
-from django.template import loader
-from django.template.loader import get_template, render_to_string
-from django.views.generic.edit import CreateView, FormView, UpdateView, DeleteView
+from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from precise_bbcode.bbcode import get_parser
 
-from .forms import BbForm, RubricForm, RubricBaseFormSet, SearchForm
+from .forms import BbForm, RubricBaseFormSet, SearchForm
 from .models import Bb, Rubric
 
 
 def index(request):
     bbs = Bb.objects.all()
-    rubrics = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)
 
     paginator = Paginator(bbs, 2, orphans=2)
+    # paginator = Paginator(bbs, 1, orphans=0)
 
     if 'page' in request.GET:
         page_num = request.GET['page']
     else:
         page_num = 1
 
+    # if 'counter' in request.COOKIES:
+    #     cnt = int(request.COOKIES['counter']) + 1
+    # else:
+    #     cnt = 1
+
+    if 'counter' in request.session:
+        cnt = int(request.session['counter']) + 1
+    else:
+        cnt = 1
+
+    request.session['counter'] = cnt
+
+    print('cnt =', cnt)
+
     page = paginator.get_page(page_num)
 
     context = {'rubrics': rubrics, 'page_obj': page, 'bbs': page.object_list}
 
-    return render(request, 'index.html', context)
+    response = render(request, 'index.html', context)
+    response.set_cookie('counter', cnt)
+    # response.set_signed_cookie('counter', cnt, salt=settings.SECRET_KEY)
+    # response.get_signed_cookie('counter', salt=settings.SECRET_KEY)
+
+    return response
 
 
-# class BbIndexView(LoginRequiredMixin, ListView):
 class BbIndexView(ListView):
+# class BbIndexView(LoginRequiredMixin, ListView):
     model = Bb
     template_name = 'index.html'
     context_object_name = 'bbs'
@@ -54,7 +74,10 @@ class BbIndexView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.annotate(cnt=Count('bb')).filter(cnt__gt=0)
+        if 'counter' in self.request.COOKIES:
+            cnt = int(self.request.COOKIES['counter']) + 1
+        else:
+            cnt = 1
         return context
 
 
@@ -63,7 +86,6 @@ class BbIndexView(ListView):
 #     template_name = 'index.html'
 #     date_field = 'published'
 #     date_list_period = 'month'
-#     # поумолчанию year, можно не писать
 #     context_object_name = 'bbs'
 #     allow_empty = True
 #
@@ -82,10 +104,14 @@ class BbMonthView(MonthArchiveView):
     context_object_name = 'bbs'
     allow_empty = True
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
-        return context
+    # def get_context_data(self, *, object_list=None, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     context['rubrics'] = Rubric.objects.all()
+    #     return context
+
+
+class BbRedirectView(RedirectView):
+    url = '/'
 
 
 class BbByRubricView(ListView):
@@ -97,7 +123,7 @@ class BbByRubricView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
+        # context['rubrics'] = Rubric.objects.all()
         context['current_rubric'] = Rubric.objects.get(
             pk=self.kwargs['rubric_id'])
         return context
@@ -106,53 +132,10 @@ class BbByRubricView(ListView):
 class BbDetailView(DetailView):
     model = Bb
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
-        return context
-
-
-class BbCreateView(CreateView):
-    template_name = 'create.html'
-    form_class = BbForm
-    success_url = '/'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
-        return context
-
-
-class RubricCreateView(CreateView):
-    template_name = 'create_rubric.html'
-    form_class = RubricForm
-    success_url = reverse_lazy('bboard:index')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubrics'] = Rubric.objects.all()
-        return context
-
-
-class BbEditView(UpdateView):
-    model = Bb
-    form_class = BbForm
-    success_url = '/'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubric'] = Rubric.objects.all()
-        return context
-
-
-class BbDeleteView(DeleteView):
-    model = Bb
-    success_url = '/'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rubric'] = Rubric.objects.all()
-        return context
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     context['rubrics'] = Rubric.objects.all()
+    #     return context
 
 
 def detail(request, pk):
@@ -162,23 +145,46 @@ def detail(request, pk):
     pass
 
 
-class BbRedirectView(RedirectView):
-    url = '/'
+class BbCreateView(CreateView):
+    template_name = 'create.html'
+    form_class = BbForm
+    success_url = '/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # context['rubrics'] = Rubric.objects.all()
+        context['messages'] = ['Ага, ты молодес!']
+        return context
 
 
-# class BbPostView(MonthArchiveView):
-#     model = Bb
-#     template_name = 'index.html'
-#     date_field = 'published'
-#     date_list_period = 'month'
-#     month_format = '%m'
-#     context_object_name = 'bbs'
-#     allow_empty = True
-#
-#     def get_context_data(self, *, object_list=None, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['bbs'] = Bb.objects.order_by('-pub_date')
-#         return context
+class BbEditView(UpdateView):
+    model = Bb
+    form_class = BbForm
+    # success_url = '/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        CRITICAL = 50
+
+        messages.add_message(self.request, messages.SUCCESS,
+                             'Объявление исправлено!', extra_tags='first second')
+        messages.add_message(self.request, CRITICAL, 'Случилось непоправимое!')
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('bboard:update', kwargs={'pk': self.kwargs['pk']})
+
+
+class BbDeleteView(DeleteView):
+    model = Bb
+    success_url = '/'
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     context['rubric'] = Rubric.objects.all()
+    #     return context
+
 
 def edit(request, pk):
     bb = Bb.objects.get(pk=pk)
@@ -188,11 +194,11 @@ def edit(request, pk):
         if bbf.is_valid():
             if bbf.has_changed():
                 bbf.save()
-            # return HttpResponseRedirect(
-            #         reverse('bboard:by_rubric', kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
-            # )
             return HttpResponseRedirect(
-                reverse('bboard:detail', kwargs={'pk': pk})
+                # reverse('bboard:by_rubric',
+                #         kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
+                reverse('bboard:detail',
+                        kwargs={'pk': pk})
             )
         else:
             context = {'form': bbf}
@@ -203,62 +209,47 @@ def edit(request, pk):
         return render(request, 'bboard/bb_form.html', context)
 
 
-    # bbf = BbForm(request.POST)
-    # # if bbf.is_valid():
-    # #     pass
-    # # else:
-    # #     pass
-    # if bbf.errors:
-    #     title_errors = bbf.errors['title']
-    #     form_errors = bbf.errors[NON_FIELD_ERRORS]
-    # bb = bbf.save(commit=False)
-    # if not bb.kind:
-    #     bb.kind = 's'
-    #
-    # bb.save()
-    # return HttpResponseRedirect(
-    #     reverse('bboard:by_rubric', kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
-    # )
-
 def add_save(request):
     bbf = BbForm(request.POST)
+
     if bbf.is_valid():
         bbf.save()
         return HttpResponseRedirect(
-                reverse('bboard:by_rubric', kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
+            reverse('bboard:by_rubric',
+                    kwargs={'rubric_id': bbf.cleaned_data['rubric'].pk})
         )
     else:
         context = {'form': bbf}
         return render(request, 'bboard/bb_form.html', context)
 
 
-def commit_handler():
-    print("C O M M I T E D")
+# def commit_handler():
+#     print("C O M M I T E D")
 
 
 def rubrics(request):
-    RubricFormSet = modelformset_factory(Rubric, RubricForm,
-                                         can_order=True, extra=3, can_delete=True, formset=RubricBaseFormSet)
+    RubricFormSet = modelformset_factory(Rubric, fields=('name',), can_order=True,
+                                         can_delete=True, extra=3, formset=RubricBaseFormSet)
 
     if request.method == 'POST':
         formset = RubricFormSet(request.POST)
 
         if formset.is_valid():
-            instance = formset.save(commit=False)
+            instances = formset.save(commit=False)
             for obj in formset:
                 if obj.cleaned_data:
-                    sp = transaction.savepoint()
+                    # sp = transaction.savepoint()
 
                     try:
                         rubric = obj.save(commit=False)
                         rubric.order = obj.cleaned_data[ORDERING_FIELD_NAME]
                         rubric.save()
-                        transaction.savepoint_commit(sp)
-                        print("C O M M I T E D", rubric)
+                        # transaction.savepoint_commit(sp)
+                        print("C O M M I T E D", rubric, type(rubric))
                     except:
-                        transaction.savepoint_rollback(sp)
-                        transaction.commit()
-                        print("N O T   C O M M I T E D")
+                        # transaction.savepoint_rollback(sp)
+                        # transaction.commit()
+                        print("N O T   C O M M I T E D", obj.cleaned_data['rubric'])
 
                     # transaction.on_commit(commit_handler)
 
@@ -290,8 +281,10 @@ def bbs(request, rubric_id):
     #     return redirect_to_login(reverse('bboard:rubrics'))
     # if request.user.is_anonymous:
     # if request.user.has_perm('bboard.add_rubric'):
-    # if request.user.has_perms('bboard.add_rubric', 'bboard.change_rubric'):
-    request.user.get_user_permissions()
+    # if request.user.has_perms(('bboard.add_rubric',
+    #                            'bboard.change_rubric',
+    #                            'bboard.delete_rubric')):
+    # request.user.get_user_permissions()
 
     if request.method == 'POST':
         formset = BbsFormSet(request.POST, instance=rubric)
@@ -322,3 +315,35 @@ def search(request):
         sf = SearchForm()
     context = {'form': sf}
     return render(request, 'bboard/search.html', context)
+
+
+def my_login(request):
+    username = request.POST['username']
+    password = request.POST['password']
+
+    user = authenticate(request, username=username, password=password)
+
+    if user is not None:
+        login(request, user)
+        # Вход выполнен
+    else:
+        # Вход не выполнен
+        pass
+
+
+def my_logout(request):
+    logout(request)
+    # Неплохо бы перенаправить
+
+
+if __name__ == '__main__':
+    admin = User.objects.get(name='admin')
+    if admin.check_password('password'):
+        # Пароли совпадают
+        pass
+    else:
+        # Пароли не совпадают
+        pass
+
+    # admin.set_password('newpassword')
+    # admin.save()

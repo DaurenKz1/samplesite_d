@@ -3,13 +3,12 @@
 {% block title %}Добавление изображения{% endblock %}
 
 {% block content %}
-
 <h2>Добавление изображения</h2>
-
-<form method="post" enctype="multipart/form-data"> только при добавлении изображений
+    
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
-
-    <p><button tupe="submit" class="btn btn-primary">Добавить</button></p>
+    
+    <p><button type="submit" class="btn btn-primary">Добавить</button></p>
 </form>
 {% endblock %}
