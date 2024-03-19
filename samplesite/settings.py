@@ -12,12 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os.path
 from pathlib import Path
 
-import environ
-
-env = environ.Env()
-environ.Env.read_env()
-
-
+# import environ
+#
+# env = environ.Env()
+# environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,8 +25,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-jf$ax!sf0v2j0g(kv%omsdi*#+-hj9v&(h0g__)djm_-u1kny)'
-SECRET_KEY = env('SECRET_KEY')
+# SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = 'django-insecure-jf$ax!sf0v2j0g(kv%omsdi*#+-hj9v&(h0g__)djm_-u1kny)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
 
+
     'captcha',
     'precise_bbcode',
     'bootstrap4',
@@ -59,8 +58,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware'
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -121,7 +122,7 @@ DATABASES = {
         # "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "postgres",
         "USER": "postgres",
-        "PASSWORD": "1234",
+        "PASSWORD": "12345",
         "HOST": "127.0.0.1",
         "PORT": "5432",
     }
@@ -271,18 +272,63 @@ THUMBNAIL_PRESERVE_EXTENSION = True  # ('png',)
 
 # from django.contrib import messages
 # MESSAGE_LEVEL = messages.DEBUG
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 
-DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-EMAIL_HOST = 'localhost'
+DEFAULT_FROM_EMAIL = "webmaster@localhost"
+
+# только для SMTP
+EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 # EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 # EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+# EMAIL_TIMEOUT = 5  # сек.
 
 EMAIL_FILE_PATH = 'tmp/messages/'
-EMAIL_TIMEOUT = 5 #sc
+
+ADMINS = [
+    ('admin', 'admin@supersite.kz'),
+]
+
+# MANGERS = [
+#     ('manager', 'manager@supersite.kz'),
+# ]
+CACHES = {
+     # 'default': {
+     #     'BACKEND' : 'django.core.cache.backends.locmem.LocMemCache',
+     #     'LOCATION' : 'cache1',
+     #     # 'BACKEND': 'django.core.cache.backends.db.DatabaseCache'
+     #     # 'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache'
+     #     # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
+     #     # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache'
+     #     'TIMEOUT' : 300,
+     #     'OPTIONS' : {
+     #         'MAX_ENTIES' : 300,
+     #         'CULL_REQUENCY' : 3
+     #     }
+     # },
+     # 'special':{
+     #     'BACKEND' : 'django.core.cache.backends.locmem.LocMemCache',
+     #     'LOCATION' : 'cache2',
+     # }
+    'default': {
+        # 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_table',
+
+        # 'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache'
+        # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
+        # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache'
+        'TIMEOUT': 120,
+        'OPTIONS': {
+            'MAX_ENTIES': 200,
+        }
+    },
+}
+
+CACHE_MIDDLEWARE_ALIAS = 'default'
+CACHE_MIDDLEWARE_SECONDS = 600
