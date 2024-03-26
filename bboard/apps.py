@@ -7,4 +7,3 @@ class BboardConfig(AppConfig):
 
     def ready(self):
         import bboard.signals
-

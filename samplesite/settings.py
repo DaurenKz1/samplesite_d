@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os.path
 from pathlib import Path
 
-# import environ
-#
-# env = environ.Env()
-# environ.Env.read_env()
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +27,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = env('SECRET_KEY')
 SECRET_KEY = 'django-insecure-jf$ax!sf0v2j0g(kv%omsdi*#+-hj9v&(h0g__)djm_-u1kny)'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -45,7 +44,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
 
-
     'captcha',
     'precise_bbcode',
     'bootstrap4',
@@ -58,10 +56,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
+
+    # 'django.middleware.cache.UpdateCacheMiddleware',  # для кэша
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware'
+
+    # 'django.middleware.cache.FetchFromCacheMiddleware',  # для кэша
+
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -297,38 +299,31 @@ ADMINS = [
 # MANGERS = [
 #     ('manager', 'manager@supersite.kz'),
 # ]
+
 CACHES = {
-     # 'default': {
-     #     'BACKEND' : 'django.core.cache.backends.locmem.LocMemCache',
-     #     'LOCATION' : 'cache1',
-     #     # 'BACKEND': 'django.core.cache.backends.db.DatabaseCache'
-     #     # 'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache'
-     #     # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
-     #     # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache'
-     #     'TIMEOUT' : 300,
-     #     'OPTIONS' : {
-     #         'MAX_ENTIES' : 300,
-     #         'CULL_REQUENCY' : 3
-     #     }
-     # },
-     # 'special':{
-     #     'BACKEND' : 'django.core.cache.backends.locmem.LocMemCache',
-     #     'LOCATION' : 'cache2',
-     # }
+    # 'default': {
+    #     'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    #     'LOCATION': 'cache1',
+    #     # 'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+    #     # 'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    #     # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    #     # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+    #     'TIMEOUT': 300,  # сек
+    #     'OPTIONS': {
+    #         'MAX_ENTRIES': 300,
+    #         'CULL_FREQUENCY': 3,
+    #     }
+    # },
+    #
     'default': {
-        # 'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'cache_table',
-
-        # 'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache'
-        # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache'
-        # 'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache'
         'TIMEOUT': 120,
         'OPTIONS': {
-            'MAX_ENTIES': 200,
+            'MAX_ENTRIES': 200,
         }
     },
 }
 
-CACHE_MIDDLEWARE_ALIAS = 'default'
-CACHE_MIDDLEWARE_SECONDS = 600
+# CACHE_MIDDLEWARE_ALIAS = 'default'
+# CACHE_MIDDLEWARE_SECONDS = 600  # сек
